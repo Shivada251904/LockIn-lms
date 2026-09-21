@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{Lockin-lms}}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+    body { background-color: #f8f9fa; }
+    .navbar-brand { font-weight: bold; }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">LockIN-LMS</a>
+
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+
+                {% if session.get("token") %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dasboard">My Progress</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Sign out</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Sign in</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/enrollments">Enrol</a>
+                    </li>
+                {% endif %}
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
