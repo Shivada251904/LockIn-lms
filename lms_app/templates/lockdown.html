@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-2">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold mb-1">LockIn Focus Mode</h2>
+        <p class="text-muted">Stay focused and maintain assessment environment integrity.</p>
+    </div>
+
+    <div id="lockdown-warning" class="alert alert-danger shadow-sm d-none" role="alert"></div>
+
+    <div class="row mb-4 g-3">
+        <div class="col-md-6">
+            <div class="card text-center shadow-sm border-0 bg-white">
+                <div class="card-body py-4">
+                    <h3 id="violation-count" class="text-danger fw-bold mb-1">0</h3>
+                    <p class="text-muted mb-0 fw-medium">Violations Recorded</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card text-center shadow-sm border-0 bg-white">
+                <div class="card-body py-4">            
+                    <h3 id="lockdown-status" class="text-primary fw-bold mb-1">Inactive</h3>
+                    <p class="text-muted mb-0 fw-medium">Lockdown Security Status</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-dark text-white py-3">
+            <h5 class="mb-0 h6 fw-medium">System Integrity Rules</h5>
+        </div>
+        <div class="card-body text-secondary small">
+            <ul class="mb-0 ps-3">
+                <li class="mb-2">Switching tabs or minimizing your desktop container window records an immediate environment violation.</li>
+                <li class="mb-2">Exiting full-screen viewing limits will trigger security tracking blocks.</li>
+                <li class="mb-2">Clipboard operations (Copy, Cut, Paste) and system right-click contextual menus are explicitly blocked.</li>
+                <li><strong>Hard Lockdown Mode:</strong> Exceeding 3 sequence violations will automatically lock, terminate, and submit your assessment answers.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-white">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 h6 fw-medium">Environment Control Panel</h5>
+        </div>
+        <div class="card-body text-center py-4">
+            <button id="soft-lock-btn" class="btn btn-warning fw-medium px-4 me-2 shadow-sm" onclick="triggerSoftMode()">
+                Launch Soft Lockdown Mode
+            </button>
+            <button id="hard-lock-btn" class="btn btn-danger fw-medium px-4 shadow-sm" onclick="triggerHardMode()">
+                Launch Hard Lockdown Mode
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 bg-white mb-4">
+        <div class="card-header bg-secondary text-white py-3">
+            <h5 class="mb-0 h6 fw-medium">Simulation Assessment Area</h5>
+        </div>
+        <div class="card-body p-4">
+            <form id="exam-form" onsubmit="event.preventDefault(); alert('Form submitted successfully!');">
+                <div class="mb-3">
+                    <label for="simulationContext" class="form-label fw-medium text-dark">Your Response / Answers</label>
+                    
+                    <textarea id="simulationContext" name="context" class="form-control font-monospace" rows="6" placeholder="Enter your assessment response here..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success px-4 fw-medium shadow-sm">
+                    Submit Simulation Assessment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='lockdown-js/lms-LDfeatures.js') }}"></script>
+
+<script>
+    window.lockdownMode = "{{ mode if mode else 'preview' }}";
+
+    function triggerSoftMode() {
+        if (typeof startSoftLockdown === "function") {
+            startSoftLockdown();
+            document.getElementById("lockdown-status").textContent = "Soft Lockdown Active";
+            document.getElementById("lockdown-status").className = "text-warning fw-bold mb-1";
+        }
+    }
+
+    function triggerHardMode() {
+        if (typeof startHardLockdown === "function") {
+            startHardLockdown();
+            document.getElementById("lockdown-status").textContent = "Hard Lockdown Active";
+            document.getElementById("lockdown-status").className = "text-danger fw-bold mb-1";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.lockdownMode === "soft") {
+            triggerSoftMode();
+        } else if (window.lockdownMode === "hard") {
+            triggerHardMode();
+        }
+    });
+</script>
+
+{% endblock %}

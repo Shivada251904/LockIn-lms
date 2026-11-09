@@ -1,6 +1,6 @@
-#Having json web tokens for encoding and verfication of roles(helper file)#
+#Having json web tokens for encoding and verfication of role authenthication(helper file)#
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from flask import current_app, request, jsonify
 from functools import wraps
 
@@ -8,10 +8,13 @@ def build_token(user_id, role):
     payload = {
         "user_id": user_id,
         "role": role,
-        "exp": datetime.utcnow() + timedelta(hours=1)
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1)
     }
     
     token = jwt.encode(payload, current_app.config["SECRET_KEY"], algorithm="HS256")
+    #Preventing flask session crashes by ensuring a clean string#
+    if isinstance(token, bytes):
+        return token.decode("utf-8")
     return token
 
 def confirm_token():
@@ -31,7 +34,7 @@ def confirm_token():
     except jwt.InvalidTokenError:
         return None, jsonify({"error": "Token invalid"}), 401
 
-#Decorator for the internal route switching#
+#Decorator function for internal route switching(role based access for student and teacher)#
 def call_auth(role=None):
     def func_mod(f):
         @wraps(f)

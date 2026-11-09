@@ -1,23 +1,59 @@
-from flask import jsonify, request
+from flask import jsonify, request, render_template, url_for, session, redirect
 from . import courses_bp
-from lms_app.models import Course, db
+from lms_app.models import User, Course, db
+from lms_app.auth.jwt_utils import call_auth
 
-#Making the courses#
+#Making the courses for students#
 @courses_bp.route("/", methods=["POST"])
-def build_course():
-    data = request.json
-    course = Course(
-        title=data["title"],
-        description=data["description"],
-        teacher_id=data["teacher_id"]
-    )
-    db.session.add(course)
-    db.session.commit()
-    return jsonify({"message": "Created Course", "id": course.id})
+@call_auth("teacher")
+def build_course(payload):
+    if "user_id" not in session or session.get("role") != "teacher":
+        return redirect(url_for("users.sign_in_page"))
+    
+    try:
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form
+        
+        required_entries = [
+                    "title",
+                    "description",
+                    "teacher_id"
+                ]
+                        
+        for entry in required_entries:
+            if entry not in data:
+                return jsonify({
+                    "error": f"Missing entry: {entry}"
+                }), 400
+        
+        course = Course(
+            title=data["title"],
+            description=data["description"],
+            teacher_id=data["teacher_id"]
+        )       
+        
+        db.session.add(course)
+        db.session.commit()
+        
+        if not request.is_json:
+            return redirect(url_for("users.lms_dashboard"))
+        
+        return jsonify({"message": "Created Course", "id": course.id}), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        
+        return jsonify({
+            "error": "Course creation failed",
+            "details": str(e)
+        }), 500
 
 #Reading all courses info#
 @courses_bp.route('/', methods=["GET"])
-def secure_courses():
+@call_auth()
+def secure_courses(payload):
     courses = Course.query.all()
     return jsonify([{
         "id": c.id,
@@ -26,34 +62,32 @@ def secure_courses():
         "teacher_id": c.teacher_id
     } for c in courses])
 
-#Reading one courses info#
-@courses_bp.route('/<int:course_id>', methods=["GET"])
-def secure_course(course_id):
-    course = Course.query.get_or_404(course_id)
-    return jsonify({
-        "id": course.id,
-        "title": course.title,
-        "description": course.description,
-        "teacher_id": course.teacher_id
-    })
-
-#Updating the courses info#
-@courses_bp.route("/<int:course>", methods=["PUT"])
-def update_course(course_id):
-    course = Course.query.get_or_404(course_id)
-    data = request.json
+#adding course details pageview#
+@courses_bp.route("/<int:course_id>")
+@call_auth()
+def course_page(course_id):
     
-    course.title = data.get("title", course.title)
-    course.description = data.get("description", course.description)
-    course.teacher_id = data.get("teacher_id", course.teacher_id)
+    if "user_id" not in session:
+        return redirect(url_for("users.sign_in_page"))
     
-    db.session.commit()
-    return jsonify({"message": "Updated Course"})
-
-#Deleting Courses info#
-@courses_bp.route("/<int:course_id>", methods=["DELETE"])
-def delete_course(course_id):
     course = Course.query.get_or_404(course_id)
-    db.session.delete(course)
-    db.session.commit()
-    return jsonify({"message": "Deleted Course"})
+    user = User.query.get_or_404(session["user_id"])
+    
+    return render_template(
+        "course_details.html",
+        course=course,
+        user=user
+    )
+#adding course template page#
+@courses_bp.route("/all", methods=["GET"])
+def courses_page():
+    
+    if "user_id" not in session:
+        return redirect(url_for("users.sign_in_page"))
+
+    courses = Course.query.all()
+
+    return render_template(
+        "courses.html",
+        courses=courses
+    )

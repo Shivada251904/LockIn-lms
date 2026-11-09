@@ -1,12 +1,13 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 from .extensions import bcrypt
 from .models import db
+import os
 
 def build_app():
     app = Flask(__name__)
     
     #Configuration base for the LMS features#
-    app.config['SECRET_KEY'] = 'supersecretkey123'
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'supersecretkey123')
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lockin-lms.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
@@ -31,7 +32,12 @@ def build_app():
     app.register_blueprint(submissions_bp, url_prefix='/submissions')
     app.register_blueprint(lockdown_bp, url_prefix='/lockdown')
     
+    @app.route("/")
+    def home():
+        return redirect(url_for("users.sign_in_page"))
+    
     #Creating tables for the database#
     with app.app_context():
+        from . import models
         db.create_all()
     return app

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow border-0 bg-white">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex p-3 bg-success-subtle text-success rounded-circle mb-3">
+                        <svg xmlns="http://w3.org" width="32" height="32" fill="currentColor" class="bi bi-person-plus-fill" viewBox="0 0 16 16">
+                            <path d="M1Ha1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm9.574 5H.426a.43.43 0 0 0-.426.43v.55c0 .238.192.43.426.43h10.148a.43.43 0 0 0 .426-.43v-.55a.43.43 0 0 0-.426-.43M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1.5a.5.5 0 0 1-1 0V11a.5.5 0 0 1 1 0m0 3a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+                            <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                        </svg>
+                    </div>
+                    <h3 class="fw-bold mb-1 text-dark">Create Account</h3>
+                    <p class="text-muted small">Register to launch your LockIn classroom dashboard</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('users.build_user') }}">
+                    <div class="mb-3">
+                        <label for="regName" class="form-label fw-medium text-dark small">Full Name</label>
+                        <input id="regName" name="name" type="text" class="form-control" placeholder="Alex Smith" required autocomplete="name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="regEmail" class="form-label fw-medium text-dark small">Email Address</label>
+                        <input id="regEmail" name="email" type="email" class="form-control" placeholder="name@example.com" required autocomplete="email">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="regPassword" class="form-label fw-medium text-dark small">Password</label>
+                        <input id="regPassword" name="password" type="password" class="form-control" placeholder="••••••••" minlength="8" required autocomplete="new-password">
+                        <div class="form-text text-muted small">Security standard: Minimum 8 characters.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="regRole" class="form-label fw-medium text-dark small">Account Security Type</label>
+                        <select id="regRole" name="role" class="form-select" required>
+                            <option value="student" selected>Student / Learner</option>
+                            <option value="teacher">Teacher / Instructor</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-semibold shadow-sm mb-3">
+                        Register
+                    </button>
+                </form>
+
+                <hr class="opacity-10 my-3">
+
+                <div class="text-center">
+                    <p class="small text-secondary mb-0">
+                        Already have an account? 
+                        <a href="{{ url_for('users.sign_in_page') }}" class="text-decoration-none fw-semibold link-success ms-1">
+                            Sign In Here
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

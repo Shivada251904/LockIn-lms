@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% set is_exam = 'exam' in assignment.title.lower() or 'lockdown' in assignment.title.lower() or 'exam' in assignment.description.lower() %}
+
+<div class="container mt-2">
+    <div class="card shadow-sm border-0 bg-white">
+        <div class="card-header {% if is_exam %}bg-danger{% else %}bg-primary{% endif %} text-white py-3">
+            <h3 class="mb-0 h5 fw-semibold d-flex align-items-center gap-2">
+                {% if is_exam %}
+                    <svg xmlns="http://w3.org" width="20" height="20" fill="currentColor" class="bi bi-shield-lock" viewBox="0 0 16 16">
+                        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2M5 9a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/>
+                    </svg>
+                    Secure Assessment Track: {{ assignment.title }}
+                {% else %}
+                    Task Overview: {{ assignment.title }}
+                {% endif %}
+            </h3>
+        </div>
+
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold text-dark h6 uppercase small mb-2 text-muted">Task Description</h5>
+            <p class="text-secondary mb-4" style="white-space: pre-wrap;">{{ assignment.description }}</p>
+
+            <hr class="opacity-10 my-4">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded border border-light-subtle h-100">
+                        <span class="text-muted small fw-bold text-uppercase d-block mb-1">Target Classroom</span>
+                        <span class="fw-medium text-dark d-block">
+                            {{ assignment.course.title if assignment.course else "Classroom Framework" }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded border border-light-subtle h-100">
+                        <span class="text-muted small fw-bold text-uppercase d-block mb-1">Final Submission Deadline</span>
+                        <span class="fw-medium {% if is_exam %}text-danger{% else %}text-dark{% endif %} d-block">
+                            {{ assignment.due_date.strftime('%d %b %Y at %H:%M') if assignment.due_date else 'No Limit' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {% if is_exam and session.get("role") == "student" %}
+                <div class="alert alert-danger border-0 shadow-sm mt-4 p-3 rounded-3 d-flex align-items-start gap-3">
+                    <svg xmlns="http://w3.org" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                    </svg>
+                    <div>
+                        <h6 class="alert-heading fw-bold mb-1">LockIn Lockdown Environment Required</h6>
+                        <p class="mb-0 small text-danger-emphasis">Opening this form will initiate full-screen security monitoring. Leaving the page or loss of application focus will generate an immediate penalty block.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card-footer bg-light border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('courses.course_page', course_id=assignment.course_id) }}" class="btn btn-sm btn-outline-secondary px-4 fw-medium">
+                Return to Course Hub
+            </a>
+
+        {% if session.get("role") == "student" %}
+            <a href="{{ url_for('submissions.submit_page', assignment_id=assignment.id) }}" 
+                class="btn btn-sm {% if is_exam %}btn-danger{% else %}btn-success{% endif %} px-5 fw-semibold shadow-sm">
+                {% if is_exam %}Launch Secure Exam Form{% else %}Open Submission Form{% endif %}
+            </a>
+        {% endif %}
+    </div>
+{% endblock %}
+

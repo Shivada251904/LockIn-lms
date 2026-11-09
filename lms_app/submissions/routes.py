@@ -1,30 +1,21 @@
-from flask import jsonify, request
+from flask import jsonify, request, render_template, session, redirect, url_for, flash
 from . import submissions_bp
-from lms_app.models import Submission, db
+from lms_app.models import Submission, Assignment, db
 from lms_app.auth.jwt_utils import call_auth
-
-#Creating submission info#
-@submissions_bp.route("/", methods=["POST"])
-def build_submission():
-    data = request.json
-    
-    submission = Submission(
-        assignment_id=data["assignment_id"],
-        student_id=data["student_id"],
-        context=data["context"],
-        grade=data.get("grade"),
-        submitted_at=data["submitted_at"]
-    )
-    db.session.add(submission)
-    db.session.commit()
-    
-    return jsonify({"message": "Created Submission", "id": submission.id})
 
 #Submitting assigment's info#
 @submissions_bp.route("/submit/<int:assignment_id>", methods=["POST"])
 @call_auth("student")
 def submit_assignment(payload, assignment_id):
-    data = request.json
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form
+    
+    if "context" not in data:
+                return jsonify({
+                    "error": "Submission content required"
+                }), 400
 
     submission = Submission(
         assignment_id=assignment_id,
@@ -36,53 +27,34 @@ def submit_assignment(payload, assignment_id):
     db.session.commit()
 
     return jsonify({"message": "Uploaded Submission"})
-
-#Getting all submissions info#
-@submissions_bp.route("/", methods=["GET"])
+    
+#Submiting assignments page index#
+@submissions_bp.route("/form/<int:assignment_id>", methods=["GET"])
 @call_auth("student")
-def secure_submissions(payload):
-    submissions = Submission.query.filter_by(student_id=payload["user_id"]).all()
+def submit_page(assignment_id):
+    if "user_id" not in session or session.get("role") != "student":
+        return redirect(url_for("users.sign_in_page"))
     
-    return jsonify([{
-        "id": s.id,
-        "assignment_id": s.assignment_id,
-        "student_id": s.student_id,
-        "context": s.context,
-        "grade": s.grade,
-        "submitted_at": s.submitted_at
-    } for s in submissions])
+    if session.get("role") != "student":
+        flash("Access Denied: Instructors cannot enter assessment sessions.", "danger")
+    return redirect(url_for("users.lms_dashboard"))
+    
+    assignment = Assignment.query.get_or_404(assignment_id)
+    
+    return render_template(
+        "submit_assignment.html",
+        assignment=assignment)
 
-#Getting one submission info#
-@submissions_bp.route("/<int:submission_id>", methods=["GET"])
-def secure_submission(submission_id):
-    submission = Submission.query.get_or_404(submission_id)
-    return jsonify({
-        "id": submission.id,
-        "assignment_id": submission.assignment_id,
-        "student_id": submission.student_id,
-        "context": submission.context,
-        "grade": submission.grade,
-        "submitted_at": submission.submitted_at
-    })
+#Viewing grades on assignments#
+@submissions_bp.route("/grades", methods=["GET"])
+def grades_page():
+    
+    if "user_id" not in session or session.get("role") != "student":
+        return redirect(url_for("users.sign_in_page"))
 
-#Updating submissions info(grading assignments)#
-@submissions_bp.route("/grade/<int:submission_id>", methods=["PUT"])
-@call_auth("teacher")
-def update_submission(submission_id, payload):
-    data = request.json
+    submissions = Submission.query.filter_by(student_id=session["user_id"]).all()
     
-    submission = Submission.query.get_or_404(submission_id)
-    submission.grade = data.get("grade", submission.grade)
-    submission.context = data.get("context", submission.context)
-    
-    db.session.commit()
-    return jsonify({"message": "Graded Submission"})
-
-#Deleting submissions info#
-@submissions_bp.route("/<int:submission_id>", methods=["DELETE"])
-def delete_submission(submission_id):
-    submission = Submission.query.get_or_404(submission_id)
-    
-    db.session.delete(submission)
-    db.session.commit()
-    return jsonify({"message": "Submission deleted"})
+    return render_template(
+        "grades.html",
+        submissions=submissions
+    )

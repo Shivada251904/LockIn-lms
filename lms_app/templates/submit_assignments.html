@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% set is_exam = 'exam' in assignment.title.lower() or 'lockdown' in assignment.title.lower() or 'exam' in assignment.description.lower() %}
+
+{% if is_exam %}
+<style>
+    nav.navbar {
+        display: none !important;
+    }
+    body {
+        user-select: none;
+    }
+</style>
+{% endif %}
+
+<div class="container mt-2">
+    <div class="card shadow-sm border-0 bg-white">
+        <div class="card-header {% if is_exam %}bg-danger{% else %}bg-success{% endif %} text-white py-3">
+            <h3 class="mb-0 h5 fw-semibold">
+                {% if is_exam %}Secure Assessment Window: {{ assignment.title }}{% else %}Submit Assignment: {{ assignment.title }}{% endif %}
+            </h3>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="p-3 bg-light rounded-3 mb-4 border border-light-subtle">
+                <h6 class="fw-bold text-dark mb-1">Task Instructions:</h6>
+                <p class="text-secondary small mb-0">{{ assignment.description }}</p>
+                {% if assignment.due_date %}
+                <small class="text-danger fw-medium d-block mt-2">
+                    <strong>Deadline:</strong> {{ assignment.due_date.strftime('%d %b %Y at %H:%M') }}
+                </small>
+                {% endif %}
+            </div>
+
+            <form id="exam-form" method="POST" action="{{ url_for('submissions.submit_assignment', assignment_id=assignment.id) }}">
+                <div class="mb-4">
+                    <label for="submissionContext" class="form-label fw-medium text-dark">Your Response / Answers</label>
+                    <textarea id="submissionContext" name="context" rows="12" class="form-control font-monospace" required placeholder="Type or paste your complete assessment submission here..."></textarea>
+                    <div class="form-text text-muted">Ensure all your answers are fully captured before hitting the submission button below.</div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    {% if is_exam %}
+                        <span class="text-muted small d-flex align-items-center gap-2">
+                            <span class="spinner-grow spinner-grow-sm text-danger" role="status"></span>
+                            LockIn tracking monitor active...
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('courses.course_page', course_id=assignment.course_id) }}" class="btn btn-sm btn-outline-secondary px-4 fw-medium">Cancel and Return</a>
+                    {% endif %}
+                    
+                    <button type="submit" class="btn {% if is_exam %}btn-danger{% else %}btn-success{% endif %} px-5 fw-semibold shadow-sm">
+                        Submit Final Assessment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if is_exam %}
+<div id="lockdown-warning" class="alert alert-danger fixed-top m-3 shadow-lg d-none" style="z-index: 9999;" role="alert"></div>
+
+<script src="{{ url_for('static', filename='lockdown-js/lms-LDfeatures.js') }}"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof startHardLockdown === "function") {
+            startHardLockdown();
+        } else {
+            console.error("LockIn Security Error: tracking asset listeners failed to load onto the DOM context framework!");
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

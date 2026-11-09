@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">All Available Courses</h2>
+            <p class="text-muted mb-0">Browse and enroll in active educational tracks across the LMS.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% if courses %}
+            {% for course in courses %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100 course-card bg-white">
+                        <div class="card-header text-white py-3" style="background: #0d6efd;">
+                            <h5 class="mb-0 text-truncate">{{ course.title }}</h5>
+                        </div>
+
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <p class="text-secondary small mb-3 text-truncate-3">{{ course.description }}</p>
+                                <hr class="opacity-10 my-2">
+                                <p class="text-muted small mb-3">
+                                    <strong>Tutor:</strong> {{ course.teacher.name }}
+                                </p>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
+                                    {{ course.assignments|length }} Assignments
+                                </span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">
+                                    {{ course.enrollments|length }} Enrolled
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3 d-flex flex-column gap-2">
+                            {% set is_enrolled = false %}
+                            
+                            {% for enrollment in course.enrollments %}
+                                {% if enrollment.student_id == session.get('user_id') %}
+                                    {% set is_enrolled = true %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if is_enrolled or session.get('role') == 'teacher' %}
+                                <a href="{{ url_for('courses.course_page', course_id=course.id) }}" class="btn btn-outline-primary w-100 fw-medium">
+                                    Open Workspace
+                                </a>
+                            {% endif %}
+
+                            <!-- Protect contextual workspace rules by restricting student enrollment prompts -->
+                            {% if session.get('role') == 'student' %}
+                                {% if not is_enrolled %}
+                                    <form method="POST" action="{{ url_for('enrollments.enroll_student') }}" class="w-100">
+                                        <input type="hidden" name="course_id" value="{{ course.id }}">
+                                        <button type="submit" class="btn btn-success w-100 fw-medium">
+                                            Enroll in Course
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button class="btn btn-secondary w-100 fw-medium" disabled>
+                                        ✓ Enrolled
+                                    </button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info py-4 border-0 shadow-sm rounded-3">
+                    <p class="mb-0 text-secondary">No active classrooms are currently published on the server database.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
